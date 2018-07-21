@@ -5,4 +5,4 @@ This folder be a place to pust templates. Potential templates include:
 * Release Notes
 * README's
 * Style Guides
-* Template for Templates?!?
+* [Template for Templates](./TemplateTemplate.md)
