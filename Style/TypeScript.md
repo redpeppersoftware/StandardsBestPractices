@@ -157,7 +157,7 @@ Inside of the `animalFactory` function, we definitely _do not_ expect the `resul
 
 Also note that we use some logic to determine how we are going to assign `result`, and since we cannot reassign const we have to perform the logic in a single expression using the _ternary_ operator, since using `if/else` blocks would require reassigning the `result` variable.
 
-We have an unused class `Fish` that we want to add to our `animalFactory` function. You may be tempted to changed the function like so:
+We have an unused class `Fish` that we want to add to our `animalFactory` function. You may be tempted to change the function like so:
 
 _Bad_
 ```typescript
