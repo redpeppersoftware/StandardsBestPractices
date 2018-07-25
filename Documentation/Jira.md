@@ -37,4 +37,8 @@ Short overview of the bug/feature
 Describe the expected result of the steps (EG: "Support dialogue should close and show confirmation that message was sent")
 ```
 
+## Priority
+If when creating a ticket as a developer you are unsure of priority, or if you require a time estimate be assigned to the ticket, please notify the Project Manager involved to assign these values.
 
+## New Features
+As a developer, unless you have specific ownership of defining new features on a project please ask the Project Manager assigned to the project to create and define new features. This is the preferred method for managing resource allocation in the company.
