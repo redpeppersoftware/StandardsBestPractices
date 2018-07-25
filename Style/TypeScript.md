@@ -1,6 +1,24 @@
+
 # Red Pepper TypeScript Styleguide
 This document outlines the general guidelines for working with TypeScript at Red Pepper.
 
+## Contents
+
+- [Single Responsibility Principle](#single-responsibility-principle)
+- [File and Function Size](#file-and-function-size)
+- [Column Length Limit](#column-length-limit)
+- [Tabs vs Spaces](#tabs-vs-spaces)
+- [Naming](#naming)
+  * [Classes](#classes)
+  * [Files](#files)
+- [Rule of One](#rule-of-one)
+- [Const vs Let vs Var](#const-vs-let-vs-var)
+- [Anonymous Functions](#anonymous-functions)
+- [Arrow Function Parameters](#arrow-function-parameters)
+- [Ternary Operator](#ternary-operator)
+- [Loops](#loops)
+- [Programming to Interfaces](#programming-to-interfaces)
+  * [Using Interfaces](#using-interfaces)
 
 ## Single Responsibility Principle
 Single Responsibility (SRP) refers to the practice of restricting any single file/module to have a clear, distinct purpose. This makes the project easier to manage and work with, and prevents tight coupling in files.
@@ -11,12 +29,13 @@ Individual code files should generally not exceed 700 lines of code. This is a _
 Functions should generally not exceed 75 lines of code. If your functions exceed this, it is an indicator that your function may be violating SRP. Very large functions are also very difficult to understand, debug, and change.
 
 ## Column Length Limit
-Columns should not exceed 80 characters in length. This allows for flexible editing regardless of indivudal developer Editor setup.
+Columns should not exceed 120 characters in length. This allows for flexible editing regardless of indivudal developer Editor setup.
 
 ## Tabs vs Spaces
 Prefer 2 spaces in place of tabs.
 
 ## Naming
+
 ### Classes
 Classes should be named using `PascalCase`.
 ### Files
@@ -80,7 +99,104 @@ export default function getId(): number{
 }
 ```
 
-## Lambda Functions
+## Const vs Let vs Var
+
+Always use either `const` or `let`, _never_ `var`. For a more detailed description of different declaration behavior, consult the [TypeScript handbook](https://www.typescriptlang.org/docs/handbook/variable-declarations.html)
+
+### When to Use Const
+
+In general, using `const` for variable declarations is the _most explicit_ way of describing a variable that shouldn't change during the lifetime of you application. For example, the following pattern is used in almost every programming language:
+
+```typescript
+export const animals = ['Cat', 'Dog', 'Snake'];
+
+animals = ['Carrot']; // Error: animals is read-only
+```
+
+Defining `const` variables inside of other functions can be useful as well. This is because you are establishing a _contract_ visible to all future programmers that the variable should _not be reassigned_.
+
+Consider the following example:
+```typescript
+abstract class Animal {
+  constructor( public fur:boolean,  private say:string ){}
+  speak():void{
+    console.log(this.say);
+  }
+};
+
+class Dog extends Animal{
+  constructor(){
+    super(true, 'bark');
+  }
+}
+
+class Snake extends Animal{
+  constructor(){
+    super(false, 'hiss');
+  }
+}
+
+class Fish extends Animal{
+  constructor(){
+    super(false, 'glug');
+  }
+}
+
+function animalFactory(isFurry: boolean):Animal{
+  const result = isFurry ? new Dog() : new Snake();
+  result.speak();
+  return result;
+}
+
+let dog = animalFactory(true); // 'bark'
+let snake = animalFactory(false); // 'hiss'
+
+```
+
+Inside of the `animalFactory` function, we definitely _do not_ expect the `result` variable to change. This prevents any accidental reassignments the developer may make that would result in a hard-to-detect runtime error.
+
+Also note that we use some logic to determine how we are going to assign `result`, and since we cannot reassign const we have to perform the logic in a single expression using the _ternary_ operator, since using `if/else` blocks would require reassigning the `result` variable.
+
+We have an unused class `Fish` that we want to add to our `animalFactory` function. You may be tempted to changed the function like so:
+
+_Bad_
+```typescript
+function animalFactory(isFurry: boolean, hasLungs:boolean = true):Animal{
+  const result = hasLungs ? isFurry ? new Dog() : new Snake() : new Fish();
+  result.speak();
+  return result;
+}
+
+let dog = animalFactory(true); // 'bark'
+let snake = animalFactory(false); // 'hiss'
+let fish = animalFactory(false, false) // 'glug';
+```
+
+Nesting the ternary operator like this is bad practice, and can quickly produce expressions that are difficult to understand and debug. If your assignment expression becomes complex when using `const`, always *prefer changing the expression to `let`*. Keeping your code readable is more important that cramming complex logic into single expressions in order to use `const`:
+
+_Good_
+```typescript
+function animalFactory(isFurry: boolean, hasLungs:boolean = true):Animal{
+  let result;
+  if(hasLungs){
+    result = isFurry ? new Dog() : new Snake();
+  }else{
+    result = new Fish();
+  }
+  result.speak();
+  return result;
+}
+
+let dog = animalFactory(true); // 'bark'
+let snake = animalFactory(false); // 'hiss'
+let fish = animalFactory(false, false) // 'glug';
+```
+
+
+
+
+
+## Anonymous Functions
 Prefer arrow-function syntax over `function` syntax.
 
 **Why?**
@@ -119,7 +235,7 @@ Inside of `ContextObj.fn` the `ContextObj` instance re-binds the `this` context 
 
 The reason why we prefer arrow-functions is because libraries, both internal and external, often will attempt to rebind `this`, which can cause unexpected behavior if you explicitly reference `this` in your callback. 
 
-## Lambda Function Parameters
+## Arrow Function Parameters
 A lambda function with one parameter should not include parentheses. Similarly, a lambda with a single expression should not use block scoping.
 
 _Bad_
@@ -203,67 +319,54 @@ let sum = arr.reduce((acc,curr)=>(acc+curr), 0);
 arr.forEach(val=>console.log(val));
 ```
 
-## Avoid Programming to Interfaces
-This goes against conventional language paradigms adopted by languages such as Java and C#, where you are encouraged to _always_ program to interfaces.
+## Programming to Interfaces
 
-Interfaces make sense in TypeScript in the same way that inheritence makes sense; it encapsulates common typings and/or functionality to be shared between **two or more** classes.
+In TypeScript the convention is to generally _avoid_ programming to interfaces. Interfaces don't provide runtime benefits like they do in other programming languages (Like C# and Java), and it results in unnecessary impots/exports.
 
-Because programming to interfaces as a rule of thumb results in more code fragmentation and unnecessary imports, it's favorable to avoid interfaces until there is a shared need between **two or more** classes.
+Since classes retain typing information it's encouraged to import classes directly instead of importing interfaces. For examples, see [the Interfaces section of the Angular styleguide](https://angular.io/guide/styleguide#interfaces).
 
-_Bad_
+### Using Interfaces
+
+Interfaces are useful for joining disparate classes that share common properties. For example:
+
 ```typescript
-/* Animal.ts */
-export default interface Animal{
-  say: ()=>string;
-}
-
-/* Dog.ts */
-import Animal from './Animal';
-
-export default class Dog implements Animal{
-  constructor(){}
-  say(){
-    return 'Bark!';
+class Dog{
+  constructor(public id: number){}
+  bark(){
+    console.log('bark');
   }
 }
+
+class Cat{
+  constructor(public id: number){}
+}
+
+class Car {
+  constructor(public id: number){}
+  numWheels():number{
+    return 4;
+  }
+}
+
+interface HasID{
+  id:number;
+}
+
+function logID(val: HasID){
+  console.log(val.id);
+}
+
+logID(new Dog(1)); // 1
+logID(new Cat(2)); // 2
+logID(new Car(3)); // 3
 ```
 
-_Good (single class)_
+This allows for defining code that expects specific object signatures without needing to _explicitly extend interfaces in the actual classes_. TypeScript knows whether or not a given class instance will match the expected interface signature automatically.
+
+For this purpose, you can alternatively declare a `type` that produces the same behavior:
+
 ```typescript
-/* Dog.ts */
-export default class Dog{
-  constructor(){}
-  say(){
-    return 'Bark!';
-  }
+type HasID = {
+  id:number;
 }
 ```
-
-_Good (multiple classes)_
-```typescript
-/* Animal.ts */
-export default interface Animal{
-  say: ()=>string;
-}
-
-/* Dog.ts */
-import Animal from './Animal';
-
-export default class Dog implements Animal{
-  constructor(){}
-  say(){
-    return 'Bark!';
-  }
-}
-
-/* Cat.ts */
-import Animal from './Animal';
-
-export default class Cat implements Animal{
-  constructor(){}
-  say(){
-    return 'Meow!';
-  }
-}
-```
-
