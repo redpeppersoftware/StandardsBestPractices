@@ -13,6 +13,7 @@ This document outlines the general guidelines for working with TypeScript at Red
   * [Files](#files)
 - [Rule of One](#rule-of-one)
 - [Const vs Let vs Var](#const-vs-let-vs-var)
+  * [When to Use Const](#when-to-use-const)
 - [Anonymous Functions](#anonymous-functions)
 - [Arrow Function Parameters](#arrow-function-parameters)
 - [Ternary Operator](#ternary-operator)
@@ -113,9 +114,69 @@ export const animals = ['Cat', 'Dog', 'Snake'];
 animals = ['Carrot']; // Error: animals is read-only
 ```
 
-Defining `const` variables inside of other functions can be useful as well. This is because you are establishing a _contract_ visible to all future programmers that the variable should _not be reassigned_.
+Const should also follow practices observed in other languages. This includes situations where static lists of primitives or application-specific objects should be used. Consider the following list, where we're defining placeholder labels **That will never change** during runtime:
 
-Consider the following example:
+_Bad_
+```typescript
+let entityKeys = {
+  user: 'user',
+  role: 'role',
+  task: 'task',
+};
+
+type item = {
+  type: string;
+  value: any | null; // null indicates it is a palceholder and not an option
+  label: string;
+};
+
+let placeholderItems: item[] = [
+  { type: entityKeys.user, value: null, label: 'Select a User' },
+  { type: entityKeys.role, value: null, label: 'Select a role' }
+];
+
+let user = placeholderItems[0];
+
+entityKeys = Object.assign(entityKeys, {user: 'contact'}); // OK, compiles
+
+console.log(user.type === entityKeys.user); // False, not what we want
+```
+
+_Good_
+```typescript
+//List of server-side entity types
+const entityKeys = {
+  user: 'user',
+  role: 'role',
+  task: 'task',
+};
+
+type item = {
+  type: string;
+  value: any | null; // null indicates it is a palceholder and not an option
+  label: string;
+};
+
+let placeholderItems: item[] = [
+  { type: entityKeys.user, value: null, label: 'Select a User' },
+  { type: entityKeys.role, value: null, label: 'Select a role' }
+];
+
+let user = placeholderItems[0];
+
+entityKeys = Object.assign(entityKeys, {user: 'contact'}); // Compiler Error!!
+```
+
+### When to Use Let
+
+`let` is the preferred declarator for most situations.
+
+Many StyleGuides and linters prescribe the use of `const` always. This StyleGuide does _not_ encourage this pattern. Using `const` instead of `let` is left up to the discretion of the programmer. In most cases, however, `let` is recommended. 
+
+For futher reading, refer to [this article](https://madhatted.com/2016/1/25/let-it-be).
+
+Consider the following example. The `animalFactory` function uses `const` within it's scope to assign two different class instances. Because `const` variables cannot be reassigned, we need to make the decision using the "ternary" operator. In this case, it is simple:
+
 ```typescript
 abstract class Animal {
   constructor( public fur:boolean,  private say:string ){}
@@ -153,11 +214,7 @@ let snake = animalFactory(false); // 'hiss'
 
 ```
 
-Inside of the `animalFactory` function, we definitely _do not_ expect the `result` variable to change. This prevents any accidental reassignments the developer may make that would result in a hard-to-detect runtime error.
-
-Also note that we use some logic to determine how we are going to assign `result`, and since we cannot reassign const we have to perform the logic in a single expression using the _ternary_ operator, since using `if/else` blocks would require reassigning the `result` variable.
-
-We have an unused class `Fish` that we want to add to our `animalFactory` function. You may be tempted to change the function like so:
+We have an unused class `Fish` that we want to add to our `animalFactory` function. Because `const` variables cannot be reassigned, a developer might introduce another ternary operator like so:
 
 _Bad_
 ```typescript
@@ -192,7 +249,7 @@ let snake = animalFactory(false); // 'hiss'
 let fish = animalFactory(false, false) // 'glug';
 ```
 
-
+For this reason, `let` is generally prefferred _unless a variable is truly constant for the entire runtime of the application_.
 
 
 
