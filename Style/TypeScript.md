@@ -14,6 +14,7 @@ This document outlines the general guidelines for working with TypeScript at Red
 - [Rule of One](#rule-of-one)
 - [Const vs Let vs Var](#const-vs-let-vs-var)
   * [When to Use Const](#when-to-use-const)
+  * [When to Use Let](#when-to-use-let)
 - [Anonymous Functions](#anonymous-functions)
 - [Arrow Function Parameters](#arrow-function-parameters)
 - [Ternary Operator](#ternary-operator)
